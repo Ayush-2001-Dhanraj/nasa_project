@@ -52,7 +52,7 @@ async function upsertPlanet(planet) {
 }
 
 async function getAllPlanets() {
-  return await Planets.find({});
+  return await Planets.find({}, { _id: 0, __v: 0 });
 }
 
 module.exports = {

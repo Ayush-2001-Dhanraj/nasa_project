@@ -1,50 +1,77 @@
-const launches = new Map();
+const launches = require("./launches.mongo");
+const Planets = require("./planets.mongo");
+
+const DEFAULT_FLIGHT_NUMBER = 100;
 
 const launch = {
   flightNumber: 100,
   mission: "Kepler Exploration X",
   rocket: "Explorer IS1",
   launchDate: new Date("19 April 2025"),
-  target: "Kepler-422 b",
+  target: "Kepler-442 b",
   customers: ["Isro", "Nasa"],
   upcoming: true,
   success: true,
 };
 
-launches.set(launch.flightNumber, launch);
-
-function getAllLaunches() {
-  return Array.from(launches.values());
+async function getAllLaunches() {
+  return await launches.find({}, { _id: 0, __v: 0 });
 }
 
-function addNewLaunch(launch) {
-  const flightNumber = getAllLaunches().length + 100;
+async function saveLaunch(launch) {
+  const planet = await Planets.findOne({ keplerName: launch.target });
 
-  launches.set(
-    flightNumber,
-    Object.assign(launch, {
-      flightNumber,
-      upcoming: true,
-      success: true,
-      customers: ["Isro", "Nasa"],
-    })
+  if (!planet) {
+    throw new Error("No matching planet found!!");
+  }
+
+  try {
+    await launches.findOneAndUpdate(
+      { flightNumber: launch.flightNumber },
+      launch,
+      { upsert: true }
+    );
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function getLatestFlightNumber() {
+  const flight = await launches.findOne().sort("-flightNumber");
+
+  return flight.flightNumber || DEFAULT_FLIGHT_NUMBER;
+}
+
+async function scheduleNewLaunch(launch) {
+  const newFlightNumber = (await getLatestFlightNumber()) + 1;
+
+  const newLaunch = Object.assign(launch, {
+    flightNumber: newFlightNumber,
+    upcoming: true,
+    success: true,
+    customers: ["Isro", "Nasa"],
+  });
+
+  await saveLaunch(newLaunch);
+  return newLaunch;
+}
+
+async function launchExistsWithID(id) {
+  return await launches.findOne({ flightNumber: id });
+}
+
+async function abortLaunchByID(id) {
+  const response = await launches.updateOne(
+    { flightNumber: id },
+    { upcoming: false, success: false }
   );
-}
 
-function launchExistsWithID(id) {
-  return launches.has(id);
-}
-
-function abortLaunchByID(id) {
-  const abortedLaunch = launches.get(id);
-  abortedLaunch.upcoming = false;
-  abortedLaunch.success = false;
-  return abortedLaunch;
+  return response.ok;
 }
 
 module.exports = {
   getAllLaunches,
-  addNewLaunch,
+  scheduleNewLaunch,
   launchExistsWithID,
   abortLaunchByID,
 };
