@@ -12,16 +12,16 @@ describe("Launches API", () => {
     await disconnectMongo();
   });
 
-  describe("Test GET /launches ", () => {
+  describe("Test GET /v1/launches ", () => {
     test("should respond with 200 status code", async () => {
       await request(app)
-        .get("/launches")
+        .get("/v1/launches")
         .expect(200)
         .expect("content-type", /json/);
     });
   });
 
-  describe("Test POST /launches", () => {
+  describe("Test POST /v1/launches", () => {
     const completeLaunchData = {
       mission: "Tellatubby to the mars",
       rocket: "martian roverion",
@@ -42,7 +42,7 @@ describe("Launches API", () => {
 
     test("should respond with 201 created status code", async () => {
       const response = await request(app)
-        .post("/launches")
+        .post("/v1/launches")
         .send(completeLaunchData)
         .expect(201)
         .expect("content-type", /json/);
@@ -57,7 +57,7 @@ describe("Launches API", () => {
 
     test("should catch missing required properties", async () => {
       const response = await request(app)
-        .post("/launches")
+        .post("/v1/launches")
         .send(launchDataWithoutDate)
         .expect(400);
 
@@ -68,7 +68,7 @@ describe("Launches API", () => {
 
     test("should catch invalid dates", async () => {
       const response = await request(app)
-        .post("/launches")
+        .post("/v1/launches")
         .send(launchDataWithInvalidDate)
         .expect(400);
 
