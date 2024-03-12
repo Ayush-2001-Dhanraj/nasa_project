@@ -66,7 +66,7 @@ async function abortLaunchByID(id) {
     { upcoming: false, success: false }
   );
 
-  return response.ok;
+  return response.modifiedCount === 1;
 }
 
 module.exports = {
